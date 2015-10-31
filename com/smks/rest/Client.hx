@@ -4,24 +4,45 @@ import haxe.Http;
 import haxe.io.BytesOutput;
 
 /**
- * ...
  * @author TABIV
+ * @author Shaun Stone
  */
 class RestClient
 {
+	// HTTP Verbs
+    private static inline var TYPE_GET = 'GET';
+    private static inline var TYPE_POST = 'POST';
+
+	/**
+	 * 
+	 * @param url
+	 * @param onData
+	 * @param parameters
+	 * @param String > = null
+	 * @param onError
+	 */
     public static function postAsync(url:String, onData:String->Void = null, parameters:Map < String, String > = null, onError:String->Void = null):Void
     {
-        var r = RestClient.buildHttpRequest(
+        var client = RestClient.buildHttpRequest(
             url,
             parameters,
             true,
             onData,
             onError);
-        r.request(true);
+        client.request(true);
     }
     
-    // No synchronous requests/sockets on Flash
+    // 
     #if !flash
+	/**
+	 * No synchronous requests/sockets on Flash
+	 * 
+	 * @param url
+	 * @param parameters
+	 * @param String> = null
+	 * @param onError
+	 * @return
+	 */
     public static function post(url:String, parameters:Map<String, String> = null, onError:String->Void = null):String
     {
         var result:String;
@@ -33,11 +54,12 @@ class RestClient
             {
                 result = data;
             },
-            onError);
+            onError
+        );
 
         // Use the existing http.request only if sys isn't present
         #if sys
-            return makeSyncRequest(http, "POST");
+            return makeSyncRequest(http, RestClient.TYPE_POST);
         #else
             http.request(true);
             return result;
@@ -45,19 +67,36 @@ class RestClient
     }
     #end
     
+	/**
+	 * 
+	 * @param url
+	 * @param onData
+	 * @param parameters
+	 * @param String > = null
+	 * @param onError
+	 */
     public static function getAsync(url:String, onData:String->Void = null, parameters:Map < String, String > = null, onError:String->Void = null):Void
     {
-        var r = RestClient.buildHttpRequest(
+        var http = RestClient.buildHttpRequest(
             url,
             parameters,
             true,
             onData,
-            onError);
-        r.request(false);
+            onError
+        );
+        http.request(false);
     }
     
     // No synchronous requests/sockets on Flash
     #if !flash
+	/**
+	 * 
+	 * @param url
+	 * @param parameters
+	 * @param String> = null
+	 * @param onError
+	 * @return
+	 */
     public static function get(url:String, parameters:Map<String, String> = null, onError:String->Void = null):String
     {
         var result:String;
@@ -70,11 +109,12 @@ class RestClient
             {
                 result = data;
             },
-            onError);
+            onError
+        );
         
         // Use the existing http.request only if sys isn't present
         #if sys
-            return makeSyncRequest(http, "GET");
+            return makeSyncRequest(http, RestClient.TYPE_GET);
         #else
             http.request(false);
             return result;
@@ -83,7 +123,13 @@ class RestClient
     #end
     
     #if sys
-    private static function makeSyncRequest(http:Http, method:String = "GET"):String
+	/**
+	 * 
+	 * @param http
+	 * @param method
+	 * @return
+	 */
+    private static function makeSyncRequest(http:Http, method:String = RestClient.TYPE_GET):String
     {
         // TODO: SSL for HTTPS URLs
         var output = new BytesOutput();
@@ -93,6 +139,16 @@ class RestClient
     }
     #end
     
+	/**
+	 * 
+	 * @param url
+	 * @param parameters
+	 * @param String = null
+	 * @param async
+	 * @param onData
+	 * @param onError
+	 * @return
+	 */
     private static function buildHttpRequest(url:String, parameters:Map<String, String> = null, async:Bool = false, onData:String->Void = null, onError:String->Void = null):Http
     {
         var http = new Http(url);
@@ -101,20 +157,16 @@ class RestClient
         http.async = async;
         #end
         
-        if (onError != null)
-        {
+        if (onError != null) {
             http.onError = onError;
         }
         
-        if (onData != null)
-        {
+        if (onData != null) {
             http.onData = onData;
         }
         
-        if (parameters != null)
-        {
-            for (x in parameters.keys())
-            {
+        if (parameters != null) {
+            for (x in parameters.keys()) {
                 http.setParameter(x, parameters.get(x));
             }
         }
